@@ -4,23 +4,16 @@ Description: Hackathon Starter Stack
 Parameters:
   VPC:
     Type: String
-    Default: vpc-d3d5b2ae
   Subnet1:
     Type: String
-    Default: subnet-a6fee4eb
   Subnet2:
     Type: String
-    Default: subnet-0996c156
   SecurityGroup:
     Type: String
-    Default: sg-421b5b59
   AMI:
     Type: String
-    Default: ami-07761f3ae34c4478d
-    
   ApplicationShortName:
     Type: String
-    Default: xxx
 
 Resources:
   KmsKey:

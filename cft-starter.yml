@@ -1,0 +1,395 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Hackathon Starter Stack
+
+Parameters:
+  VPC:
+    Type: String
+    Default: vpc-d3d5b2ae
+  Subnet1:
+    Type: String
+    Default: subnet-a6fee4eb
+  Subnet2:
+    Type: String
+    Default: subnet-0996c156
+  SecurityGroup:
+    Type: String
+    Default: sg-421b5b59
+  AMI:
+    Type: String
+    Default: ami-07761f3ae34c4478d
+    
+  ApplicationShortName:
+    Type: String
+    Default: xxx
+
+Resources:
+  KmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Enabled: true
+      EnableKeyRotation: true
+
+  KmsAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub 'alias/fnma/app/${ApplicationShortName}'
+      TargetKeyId:  !Ref KmsKey
+
+  KeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: !Ref ApplicationShortName
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${ApplicationShortName}-alb-sg'
+      GroupDescription: Allow HTTP from anywhere
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${ApplicationShortName}-ec2-sg'
+      GroupDescription: Allow HTTP from ALB only
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        SourceSecurityGroupId: !Ref ALBSecurityGroup
+        
+  EFSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${ApplicationShortName}-efs-sg'
+      GroupDescription: Allow EC2 to mount EFS
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 2049
+        ToPort: 2049
+        SourceSecurityGroupId: !Ref EC2SecurityGroup
+
+  EFS:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      Encrypted: true
+      KmsKeyId: !Ref KmsKey
+      FileSystemTags:
+        - Key: Name
+          Value: !Sub '${ApplicationShortName}-efs'
+
+  EFSAccessPoint:
+    Type: AWS::EFS::AccessPoint
+    Properties:
+      FileSystemId: !Ref EFS
+      AccessPointTags:
+        - Key: Name
+          Value: !Sub '${ApplicationShortName}-efs-ap'
+
+  EFSTarget1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref EFS
+      SubnetId: !Ref Subnet1
+      SecurityGroups:
+      - !Ref EFSSecurityGroup
+      
+  EFSTarget2:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref EFS
+      SubnetId: !Ref Subnet2
+      SecurityGroups:
+      - !Ref EFSSecurityGroup
+
+  EC2LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: !Sub '${ApplicationShortName}-ec2-template'
+      LaunchTemplateData:
+        ImageId: !Ref AMI
+        InstanceType: t2.micro
+        KeyName: !Ref KeyPair
+        IamInstanceProfile: 
+          Name: EC2SSMRole
+        NetworkInterfaces: 
+          - DeviceIndex: 0
+            Groups:
+              - !Ref EC2SecurityGroup
+        UserData: 
+          Fn::Base64: !Sub |
+            #!/bin/sh
+            yum update -y
+            amazon-linux-extras install epel -y
+            yum install httpd php stress -y
+            
+            mkdir -p /export/appl/data
+            mkfs -t xfs /dev/xvdb
+            echo "/dev/xvdb /export/appl/data xfs defaults,nofail 0 2" >> /etc/fstab
+            mount -a
+
+            echo "test data file for EBS root volume created at $(date)" > /readme.txt
+            
+            echo "<html><h1>Hello World</h1></html>" > /var/www/html/index.html
+          
+            echo "<html><h1>Hello World</h1></html>" > /var/www/html/index.php
+            echo "<p>EC2 instance: $(ec2-metadata -i | awk '{print $2}')</p>" >> /var/www/html/index.php
+            echo "<p>EBS Root volume: <?php include '/readme.txt'; ?></p>" >> /var/www/html/index.php
+            echo "</html>" >> /var/www/html/index.php
+
+            systemctl start httpd
+            systemctl enable httpd
+
+  ALB1:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: application
+      Name: !Sub '${ApplicationShortName}-alb1'
+      SecurityGroups:
+      - !Ref ALBSecurityGroup
+      Subnets: 
+      - !Ref Subnet1
+      - !Ref Subnet2
+      Tags:
+        - Key: Name
+          Value: !Sub '${ApplicationShortName}-alb1'
+          
+  ALB1Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      Protocol: HTTP
+      Port: 80
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ALB1TargetGroup
+      LoadBalancerArn: !Ref ALB1
+
+  ALB1TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub '${ApplicationShortName}-alb1-tg'
+      VpcId: !Ref VPC
+      TargetType: instance
+      HealthCheckPath: /index.html
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 20
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 5
+      Port: 80
+      Protocol: HTTP
+      Tags:
+        - Key: Name
+          Value: !Sub '${ApplicationShortName}-alb1-tg'
+          
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      MinSize: 2
+      MaxSize: 5
+      DesiredCapacity: 2
+      LaunchTemplate:
+        LaunchTemplateId: !Ref EC2LaunchTemplate
+        Version: !GetAtt EC2LaunchTemplate.LatestVersionNumber
+      HealthCheckType: ELB
+      VPCZoneIdentifier:
+        - !Ref Subnet1
+        - !Ref Subnet2
+      TargetGroupARNs: 
+        - !Ref ALB1TargetGroup
+
+  CpuScalingPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AutoScalingGroupName: !Ref AutoScalingGroup
+      PolicyType: TargetTrackingScaling
+      TargetTrackingConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ASGAverageCPUUtilization
+        TargetValue: 50
+
+  ScalingPolicyChange:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref AutoScalingGroup
+      ScalingAdjustment: 1
+
+  CloudWatchAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      EvaluationPeriods: 1
+      Statistic: Average
+      Threshold: 50
+      AlarmDescription: Alarm if CPU higher than 50%
+      Period: 60
+      AlarmActions:
+        - !Ref ScalingPolicyChange
+      Namespace: AWS/EC2
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value:
+            Ref: AutoScalingGroup
+      ComparisonOperator: GreaterThanThreshold
+      MetricName: CPUUtilization
+
+  ALB2:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: application
+      Name: !Sub '${ApplicationShortName}-alb2'
+      SecurityGroups:
+      - !Ref ALBSecurityGroup
+      Subnets: 
+      - !Ref Subnet1
+      - !Ref Subnet2
+      Tags:
+        - Key: Name
+          Value: !Sub '${ApplicationShortName}-alb2'
+
+  ALB2Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      Protocol: HTTP
+      Port: 80
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ALB2TargetGroup
+      LoadBalancerArn: !Ref ALB2
+
+  ALB2TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub '${ApplicationShortName}-alb2-tg'
+      VpcId: !Ref VPC
+      TargetType: instance
+      HealthCheckPath: /index.html
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 20
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 5
+      Port: 80
+      Protocol: HTTP
+      Targets:
+        - Id: !Ref EC2Instance1
+        - Id: !Ref EC2Instance2
+      Tags:
+        - Key: Name
+          Value: !Sub '${ApplicationShortName}-alb2-tg'
+
+  EC2Instance1:
+    Type: AWS::EC2::Instance
+    DependsOn: 
+      - EFS
+    Properties:
+      KeyName: !Ref KeyPair
+      ImageId: !Ref AMI
+      InstanceType: t2.micro
+      SubnetId: !Ref Subnet1
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      IamInstanceProfile: EC2SSMRole
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 8
+            Encrypted: true
+            KmsKeyId: !Ref KmsKey
+        - DeviceName: /dev/sdb
+          Ebs:
+            VolumeSize: 1
+            Encrypted: true
+            KmsKeyId: !Ref KmsKey
+      Tags:
+        - Key: Name
+          Value: !Sub '${ApplicationShortName}-ec2-1'
+      PropagateTagsToVolumeOnCreation: true
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/sh
+          yum update -y
+          yum install amazon-efs-utils httpd php -y
+          
+          mkdir -p /export/appl/data
+          mkfs -t xfs /dev/xvdb
+          echo "/dev/xvdb /export/appl/data xfs defaults,nofail 0 2" >> /etc/fstab
+          mkdir -p /export/appl/data2
+          echo "$(basename ${EFS.Arn}).efs.${AWS::Region}.amazonaws.com:/ /export/appl/data2 efs defaults 0 0" >> /etc/fstab
+          sleep 60
+          mount -a
+          
+          echo "test data file for EBS root volume created at $(date)" > /readme.txt
+          echo "test data file for EBS data volume created at $(date)" > /export/appl/data/readme.txt
+          echo "test data file for EFS data2 volume created at $(date)" > /export/appl/data2/readme.txt
+
+          echo "<html><h1>Hello World</h1></html>" > /var/www/html/index.html
+          
+          echo "<html><h1>Hello World</h1></html>" > /var/www/html/index.php
+          echo "<p>EC2 instance: $(ec2-metadata -i | awk '{print $2}')</p>" >> /var/www/html/index.php
+          echo "<p>EBS Root volume: <?php include '/readme.txt'; ?></p>" >> /var/www/html/index.php
+          echo "<p>EBS Data volume: <?php include '/export/appl/data/readme.txt'; ?></p>" >> /var/www/html/index.php
+          echo "<p>EFS Data2 volume: <?php include '/export/appl/data2/readme.txt'; ?></p>" >> /var/www/html/index.php
+          echo "</html>" >> /var/www/html/index.php
+
+          systemctl start httpd
+          systemctl enable httpd
+
+  EC2Instance2:
+    Type: AWS::EC2::Instance
+    Properties:
+      KeyName: !Ref KeyPair
+      ImageId: !Ref AMI
+      InstanceType: t2.micro
+      SubnetId: !Ref Subnet2
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      IamInstanceProfile: EC2SSMRole
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 8
+            Encrypted: true
+            KmsKeyId: !Ref KmsKey
+        - DeviceName: /dev/sdb
+          Ebs:
+            VolumeSize: 1
+            Encrypted: true
+            KmsKeyId: !Ref KmsKey
+      Tags:
+        - Key: Name
+          Value: !Sub '${ApplicationShortName}-ec2-2'
+      PropagateTagsToVolumeOnCreation: true
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/sh
+          yum update -y
+          yum install amazon-efs-utils httpd php -y
+          
+          mkdir -p /export/appl/data
+          mkfs -t xfs /dev/xvdb
+          echo "/dev/xvdb /export/appl/data xfs defaults,nofail 0 2" >> /etc/fstab
+          mkdir -p /export/appl/data2
+          echo "$(basename ${EFS.Arn}).efs.${AWS::Region}.amazonaws.com:/ /export/appl/data2 efs defaults 0 0" >> /etc/fstab
+          sleep 60
+          mount -a
+
+          echo "test data file for EBS root volume created at $(date)" > /readme.txt
+          echo "test data file for EBS data volume created at $(date)" > /export/appl/data/readme.txt
+
+          echo "<html><h1>Hello World</h1></html>" > /var/www/html/index.html
+          
+          echo "<html><h1>Hello World</h1></html>" > /var/www/html/index.php
+          echo "<p>EC2 instance: $(ec2-metadata -i | awk '{print $2}')</p>" >> /var/www/html/index.php
+          echo "<p>EBS Root volume: <?php include '/readme.txt'; ?></p>" >> /var/www/html/index.php
+          echo "<p>EBS Data volume: <?php include '/export/appl/data/readme.txt'; ?></p>" >> /var/www/html/index.php
+          echo "<p>EFS Data2 volume: <?php include '/export/appl/data2/readme.txt'; ?></p>" >> /var/www/html/index.php
+          echo "</html>" >> /var/www/html/index.php
+
+          systemctl start httpd
+          systemctl enable httpd

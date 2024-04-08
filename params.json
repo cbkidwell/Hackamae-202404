@@ -1,26 +1,10 @@
-[
-  {
-    "ParameterKey": "VPC",
-    "ParameterValue": "vpc-d3d5b2ae"
-  },
-  {
-    "ParameterKey": "Subnet1",
-    "ParameterValue": "subnet-a6fee4eb"
-  },
-  {
-    "ParameterKey": "Subnet2",
-    "ParameterValue": "subnet-0996c156"
-  },
-  {
-    "ParameterKey": "SecurityGroup",
-    "ParameterValue": "sg-421b5b59"
-  },
-  {
-    "ParameterKey": "AMI",
-    "ParameterValue": "ami-07761f3ae34c4478d"
-  },
-  {
-    "ParameterKey": "ApplicationShortName",
-    "ParameterValue": "teamname"
+{
+  "Parameters": {
+    "VPC": "vpc-003464ea4fcd2595b",
+    "Subnet1": "subnet-045317ba88b885fa9",
+    "Subnet2": "subnet-06f2d6f2d2a7bafb2",
+    "SecurityGroup": "sg-0ddac2b685b2569ad",
+    "AMI": "ami-07761f3ae34c4478d",
+    "TeamName": "Team123"
   }
-]
+}

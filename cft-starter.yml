@@ -12,7 +12,7 @@ Parameters:
     Type: String
   AMI:
     Type: String
-  ApplicationShortName:
+  TeamName:
     Type: String
 
 Resources:
@@ -22,21 +22,15 @@ Resources:
       Enabled: true
       EnableKeyRotation: true
 
-  KmsAlias:
-    Type: AWS::KMS::Alias
-    Properties:
-      AliasName: !Sub 'alias/fnma/app/${ApplicationShortName}'
-      TargetKeyId:  !Ref KmsKey
-
   KeyPair:
     Type: AWS::EC2::KeyPair
     Properties:
-      KeyName: !Ref ApplicationShortName
+      KeyName: !Ref TeamName
 
   ALBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub '${ApplicationShortName}-alb-sg'
+      GroupName: !Sub '${TeamName}-alb-sg'
       GroupDescription: Allow HTTP from anywhere
       VpcId: !Ref VPC
       SecurityGroupIngress:
@@ -48,7 +42,7 @@ Resources:
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub '${ApplicationShortName}-ec2-sg'
+      GroupName: !Sub '${TeamName}-ec2-sg'
       GroupDescription: Allow HTTP from ALB only
       VpcId: !Ref VPC
       SecurityGroupIngress:
@@ -60,7 +54,7 @@ Resources:
   EFSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub '${ApplicationShortName}-efs-sg'
+      GroupName: !Sub '${TeamName}-efs-sg'
       GroupDescription: Allow EC2 to mount EFS
       VpcId: !Ref VPC
       SecurityGroupIngress:
@@ -76,7 +70,7 @@ Resources:
       KmsKeyId: !Ref KmsKey
       FileSystemTags:
         - Key: Name
-          Value: !Sub '${ApplicationShortName}-efs'
+          Value: !Sub '${TeamName}-efs'
 
   EFSAccessPoint:
     Type: AWS::EFS::AccessPoint
@@ -84,7 +78,7 @@ Resources:
       FileSystemId: !Ref EFS
       AccessPointTags:
         - Key: Name
-          Value: !Sub '${ApplicationShortName}-efs-ap'
+          Value: !Sub '${TeamName}-efs-ap'
 
   EFSTarget1:
     Type: AWS::EFS::MountTarget
@@ -105,7 +99,7 @@ Resources:
   EC2LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
-      LaunchTemplateName: !Sub '${ApplicationShortName}-ec2-template'
+      LaunchTemplateName: !Sub '${TeamName}-ec2-template'
       LaunchTemplateData:
         ImageId: !Ref AMI
         InstanceType: t2.micro
@@ -144,7 +138,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Type: application
-      Name: !Sub '${ApplicationShortName}-alb1'
+      Name: !Sub '${TeamName}-alb1'
       SecurityGroups:
       - !Ref ALBSecurityGroup
       Subnets: 
@@ -152,7 +146,7 @@ Resources:
       - !Ref Subnet2
       Tags:
         - Key: Name
-          Value: !Sub '${ApplicationShortName}-alb1'
+          Value: !Sub '${TeamName}-alb1'
           
   ALB1Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -167,7 +161,7 @@ Resources:
   ALB1TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub '${ApplicationShortName}-alb1-tg'
+      Name: !Sub '${TeamName}-alb1-tg'
       VpcId: !Ref VPC
       TargetType: instance
       HealthCheckPath: /index.html
@@ -179,7 +173,7 @@ Resources:
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub '${ApplicationShortName}-alb1-tg'
+          Value: !Sub '${TeamName}-alb1-tg'
           
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -236,7 +230,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Type: application
-      Name: !Sub '${ApplicationShortName}-alb2'
+      Name: !Sub '${TeamName}-alb2'
       SecurityGroups:
       - !Ref ALBSecurityGroup
       Subnets: 
@@ -244,7 +238,7 @@ Resources:
       - !Ref Subnet2
       Tags:
         - Key: Name
-          Value: !Sub '${ApplicationShortName}-alb2'
+          Value: !Sub '${TeamName}-alb2'
 
   ALB2Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -259,7 +253,7 @@ Resources:
   ALB2TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub '${ApplicationShortName}-alb2-tg'
+      Name: !Sub '${TeamName}-alb2-tg'
       VpcId: !Ref VPC
       TargetType: instance
       HealthCheckPath: /index.html
@@ -274,7 +268,7 @@ Resources:
         - Id: !Ref EC2Instance2
       Tags:
         - Key: Name
-          Value: !Sub '${ApplicationShortName}-alb2-tg'
+          Value: !Sub '${TeamName}-alb2-tg'
 
   EC2Instance1:
     Type: AWS::EC2::Instance
@@ -301,7 +295,7 @@ Resources:
             KmsKeyId: !Ref KmsKey
       Tags:
         - Key: Name
-          Value: !Sub '${ApplicationShortName}-ec2-1'
+          Value: !Sub '${TeamName}-ec2-1'
       PropagateTagsToVolumeOnCreation: true
       UserData:
         Fn::Base64: !Sub |
@@ -356,7 +350,7 @@ Resources:
             KmsKeyId: !Ref KmsKey
       Tags:
         - Key: Name
-          Value: !Sub '${ApplicationShortName}-ec2-2'
+          Value: !Sub '${TeamName}-ec2-2'
       PropagateTagsToVolumeOnCreation: true
       UserData:
         Fn::Base64: !Sub |

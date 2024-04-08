@@ -21,11 +21,17 @@ Resources:
     Properties:
       Enabled: true
       EnableKeyRotation: true
+      Tags:
+        - Name: Name
+          Value: !Sub '${TeamName}-kms'
 
   KeyPair:
     Type: AWS::EC2::KeyPair
     Properties:
       KeyName: !Ref TeamName
+      Tags:
+        - Name: Name
+          Value: !Sub '${TeamName}-keypair'
 
   ALBSecurityGroup:
     Type: AWS::EC2::SecurityGroup

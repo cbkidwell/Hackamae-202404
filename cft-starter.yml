@@ -116,10 +116,6 @@ Resources:
             Groups:
               - !Ref EC2SecurityGroup
         TagSpecifications:
-          - ResourceType: launch-template
-            Tags:
-              - Key: Name
-                Value: !Sub '${TeamName}-ec2-launch-template'
           - ResourceType: instance
             Tags:
               - Key: Name

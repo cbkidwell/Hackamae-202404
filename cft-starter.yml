@@ -21,9 +21,6 @@ Resources:
     Properties:
       Enabled: true
       EnableKeyRotation: true
-      Tags:
-        - Name: Name
-          Value: !Sub '${TeamName}-kms'
 
   KeyPair:
     Type: AWS::EC2::KeyPair

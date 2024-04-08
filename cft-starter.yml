@@ -105,7 +105,7 @@ Resources:
         InstanceType: t2.micro
         KeyName: !Ref KeyPair
         IamInstanceProfile: 
-          Name: EC2SSMRole
+          Name: EC2FullAccessRole
         NetworkInterfaces: 
           - DeviceIndex: 0
             Groups:
@@ -281,7 +281,7 @@ Resources:
       SubnetId: !Ref Subnet1
       SecurityGroupIds:
         - !Ref EC2SecurityGroup
-      IamInstanceProfile: EC2SSMRole
+      IamInstanceProfile: EC2FullAccessRole
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
@@ -336,7 +336,7 @@ Resources:
       SubnetId: !Ref Subnet2
       SecurityGroupIds:
         - !Ref EC2SecurityGroup
-      IamInstanceProfile: EC2SSMRole
+      IamInstanceProfile: EC2FullAccessRole
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:

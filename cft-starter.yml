@@ -71,6 +71,9 @@ Resources:
       FileSystemTags:
         - Key: Name
           Value: !Sub '${TeamName}-efs'
+        - Key: CustomTag
+          Value: CustomTagEfs
+
 
   EFSAccessPoint:
     Type: AWS::EFS::AccessPoint
@@ -79,6 +82,8 @@ Resources:
       AccessPointTags:
         - Key: Name
           Value: !Sub '${TeamName}-efs-ap'
+        - Key: CustomTag
+          Value: CustomTagEfsAccessPoint
 
   EFSTarget1:
     Type: AWS::EFS::MountTarget
@@ -110,6 +115,18 @@ Resources:
           - DeviceIndex: 0
             Groups:
               - !Ref EC2SecurityGroup
+        TagSpecifications:
+          - ResourceType: launch-template
+            Tags:
+              Key: Name
+              Value: !Sub '${TeamName}-ec2-launch-template
+          - ResourceType: instance
+            Tags:
+              Key: Name
+              Value: !Sub '${TeamName}-ec2
+          - Key: CustomTag
+            Value: CustomTagEC2
+          
         UserData: 
           Fn::Base64: !Sub |
             #!/bin/sh
@@ -147,6 +164,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${TeamName}-alb1'
+        - Key: CustomTag
+          Value: CustomTagALB1
           
   ALB1Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -174,6 +193,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${TeamName}-alb1-tg'
+        - Key: CustomTag
+          Value: CustomTagALB1TG
           
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -239,6 +260,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${TeamName}-alb2'
+        - Key: CustomTag
+          Value: CustomTagALB2
 
   ALB2Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -269,6 +292,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${TeamName}-alb2-tg'
+        - Key: CustomTag
+          Value: CustomTagALB2TG
 
   EC2Instance1:
     Type: AWS::EC2::Instance
@@ -296,6 +321,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${TeamName}-ec2-1'
+        - Key: CustomTag
+          Value: CustomTagEC2
       PropagateTagsToVolumeOnCreation: true
       UserData:
         Fn::Base64: !Sub |
@@ -351,6 +378,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${TeamName}-ec2-2'
+        - Key: CustomTag
+          Value: CustomTagEC2
       PropagateTagsToVolumeOnCreation: true
       UserData:
         Fn::Base64: !Sub |

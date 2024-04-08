@@ -29,9 +29,6 @@ Resources:
     Type: AWS::EC2::KeyPair
     Properties:
       KeyName: !Ref TeamName
-      Tags:
-        - Name: Name
-          Value: !Sub '${TeamName}-keypair'
 
   ALBSecurityGroup:
     Type: AWS::EC2::SecurityGroup

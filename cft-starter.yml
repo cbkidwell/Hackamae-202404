@@ -119,11 +119,11 @@ Resources:
           - ResourceType: launch-template
             Tags:
               Key: Name
-              Value: !Sub '${TeamName}-ec2-launch-template
+              Value: !Sub '${TeamName}-ec2-launch-template'
           - ResourceType: instance
             Tags:
               Key: Name
-              Value: !Sub '${TeamName}-ec2
+              Value: !Sub '${TeamName}-ec2'
           - Key: CustomTag
             Value: CustomTagEC2
           

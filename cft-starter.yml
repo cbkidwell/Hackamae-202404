@@ -320,7 +320,7 @@ Resources:
             Encrypted: true
             KmsKeyId: !Ref KmsKey
       NetworkInterfaces:
-        AssociatePublicIpAddress: false
+        - AssociatePublicIpAddress: false
       Tags:
         - Key: Name
           Value: !Sub '${TeamName}-ec2-1'

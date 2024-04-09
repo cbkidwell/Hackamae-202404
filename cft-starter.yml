@@ -12,7 +12,7 @@ Parameters:
     Type: String
   AMI:
     Type: String
-  TeamName:
+  TeamNumber:
     Type: String
 
 Resources:
@@ -25,12 +25,12 @@ Resources:
   KeyPair:
     Type: AWS::EC2::KeyPair
     Properties:
-      KeyName: !Ref TeamName
+      KeyName: !Ref TeamNumber
 
   ALBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub '${TeamName}-alb-sg'
+      GroupName: !Sub 'Team${TeamNumber}-alb-sg'
       GroupDescription: Allow HTTP from anywhere
       VpcId: !Ref VPC
       SecurityGroupIngress:
@@ -42,7 +42,7 @@ Resources:
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub '${TeamName}-ec2-sg'
+      GroupName: !Sub 'Team${TeamNumber}-ec2-sg'
       GroupDescription: Allow HTTP from ALB only
       VpcId: !Ref VPC
       SecurityGroupIngress:
@@ -54,7 +54,7 @@ Resources:
   EFSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub '${TeamName}-efs-sg'
+      GroupName: !Sub 'Team${TeamNumber}-efs-sg'
       GroupDescription: Allow EC2 to mount EFS
       VpcId: !Ref VPC
       SecurityGroupIngress:
@@ -70,7 +70,7 @@ Resources:
       KmsKeyId: !Ref KmsKey
       FileSystemTags:
         - Key: Name
-          Value: !Sub '${TeamName}-efs'
+          Value: !Sub 'Team${TeamNumber}-efs'
         - Key: CustomTag
           Value: CustomTagEfs
 
@@ -81,7 +81,7 @@ Resources:
       FileSystemId: !Ref EFS
       AccessPointTags:
         - Key: Name
-          Value: !Sub '${TeamName}-efs-ap'
+          Value: !Sub 'Team${TeamNumber}-efs-ap'
         - Key: CustomTag
           Value: CustomTagEfsAccessPoint
 
@@ -104,13 +104,13 @@ Resources:
   EC2LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
-      LaunchTemplateName: !Sub '${TeamName}-ec2-template'
+      LaunchTemplateName: !Sub 'Team${TeamNumber}-ec2-template'
       LaunchTemplateData:
         ImageId: !Ref AMI
         InstanceType: t2.micro
         KeyName: !Ref KeyPair
         IamInstanceProfile: 
-          Name: EC2FullAccessRole
+          Name: MyEC2AdminRole 
         NetworkInterfaces: 
           - DeviceIndex: 0
             Groups:
@@ -119,7 +119,7 @@ Resources:
           - ResourceType: instance
             Tags:
               - Key: Name
-                Value: !Sub '${TeamName}-ec2'
+                Value: !Sub 'Team${TeamNumber}-ec2'
               - Key: CustomTag
                 Value: CustomTagEC2
           
@@ -228,7 +228,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Type: application
-      Name: !Sub '${TeamName}-alb1'
+      Name: !Sub 'Team${TeamNumber}-alb1'
       SecurityGroups:
       - !Ref ALBSecurityGroup
       Subnets: 
@@ -236,7 +236,7 @@ Resources:
       - !Ref Subnet2
       Tags:
         - Key: Name
-          Value: !Sub '${TeamName}-alb1'
+          Value: !Sub 'Team${TeamNumber}-alb1'
         - Key: CustomTag
           Value: CustomTagALB1
           
@@ -253,7 +253,7 @@ Resources:
   ALB1TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub '${TeamName}-alb1-tg'
+      Name: !Sub 'Team${TeamNumber}-alb1-tg'
       VpcId: !Ref VPC
       TargetType: instance
       HealthCheckPath: /index.html
@@ -265,7 +265,7 @@ Resources:
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub '${TeamName}-alb1-tg'
+          Value: !Sub 'Team${TeamNumber}-alb1-tg'
         - Key: CustomTag
           Value: CustomTagALB1TG
           
@@ -324,7 +324,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Type: application
-      Name: !Sub '${TeamName}-alb2'
+      Name: !Sub 'Team${TeamNumber}-alb2'
       SecurityGroups:
       - !Ref ALBSecurityGroup
       Subnets: 
@@ -332,7 +332,7 @@ Resources:
       - !Ref Subnet2
       Tags:
         - Key: Name
-          Value: !Sub '${TeamName}-alb2'
+          Value: !Sub 'Team${TeamNumber}-alb2'
         - Key: CustomTag
           Value: CustomTagALB2
 
@@ -349,7 +349,7 @@ Resources:
   ALB2TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub '${TeamName}-alb2-tg'
+      Name: !Sub 'Team${TeamNumber}-alb2-tg'
       VpcId: !Ref VPC
       TargetType: instance
       HealthCheckPath: /index.html
@@ -364,7 +364,7 @@ Resources:
         - Id: !Ref EC2Instance2
       Tags:
         - Key: Name
-          Value: !Sub '${TeamName}-alb2-tg'
+          Value: !Sub 'Team${TeamNumber}-alb2-tg'
         - Key: CustomTag
           Value: CustomTagALB2TG
 
@@ -379,7 +379,7 @@ Resources:
       SubnetId: !Ref Subnet1
       SecurityGroupIds:
         - !Ref EC2SecurityGroup
-      IamInstanceProfile: EC2FullAccessRole
+      IamInstanceProfile: MyEC2AdminRole 
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
@@ -393,7 +393,7 @@ Resources:
             KmsKeyId: !Ref KmsKey
       Tags:
         - Key: Name
-          Value: !Sub '${TeamName}-ec2-1'
+          Value: !Sub 'Team${TeamNumber}-ec2-1'
         - Key: CustomTag
           Value: CustomTagEC2
       PropagateTagsToVolumeOnCreation: true
@@ -510,7 +510,7 @@ Resources:
         - !Ref EC2SecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub '${TeamName}-eni-1'
+          Value: !Sub 'Team${TeamNumber}-eni-1'
 
   NetworkInterfaceAttachment1:
     Type: AWS::EC2::NetworkInterfaceAttachment
@@ -528,7 +528,7 @@ Resources:
       SubnetId: !Ref Subnet2
       SecurityGroupIds:
         - !Ref EC2SecurityGroup
-      IamInstanceProfile: EC2FullAccessRole
+      IamInstanceProfile: MyEC2AdminRole 
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
@@ -542,7 +542,7 @@ Resources:
             KmsKeyId: !Ref KmsKey
       Tags:
         - Key: Name
-          Value: !Sub '${TeamName}-ec2-2'
+          Value: !Sub 'Team${TeamNumber}-ec2-2'
         - Key: CustomTag
           Value: CustomTagEC2
       PropagateTagsToVolumeOnCreation: true
@@ -660,7 +660,7 @@ Resources:
         - !Ref EC2SecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub '${TeamName}-eni-2'
+          Value: !Sub 'Team${TeamNumber}-eni-2'
 
   NetworkInterfaceAttachment2:
     Type: AWS::EC2::NetworkInterfaceAttachment

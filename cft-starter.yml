@@ -333,7 +333,7 @@ Resources:
 
           INSTANCE_ID=$(ec2-metadata -i | awk '{print $2}')
           AMI_ID=$(ec2-metadata -a | awk '{print $2}')
-          REGION=$(aws ec2 describe-availability-zones --output text --query 'AvailabilityZones[0].[RegionName]')
+          REGION=$(ec2-metadata -z | awk '{print $2}' | rev | cut -c2- | rev)
           aws configure set region $REGION
           INSTANCE_DETAIL=$(aws ec2 describe-instances --instance-id $INSTANCE_ID | jq '.Reservations[0].Instances[0]')
           INSTANCE_TYPE=$(ec2-metadata -t | awk '{print $2}')

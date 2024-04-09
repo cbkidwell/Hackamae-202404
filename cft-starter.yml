@@ -320,7 +320,10 @@ Resources:
             Encrypted: true
             KmsKeyId: !Ref KmsKey
       NetworkInterfaces:
-        - AssociatePublicIpAddress: false
+        - DeviceIndex: 0
+          AssociatePublicIpAddress: false
+          Groups:
+            - !Ref EC2SecurityGroup
       Tags:
         - Key: Name
           Value: !Sub '${TeamName}-ec2-1'

@@ -304,7 +304,6 @@ Resources:
       KeyName: !Ref KeyPair
       ImageId: !Ref AMI
       InstanceType: t2.micro
-      SubnetId: !Ref Subnet1
       SecurityGroupIds:
         - !Ref EC2SecurityGroup
       IamInstanceProfile: EC2FullAccessRole
@@ -322,6 +321,7 @@ Resources:
       NetworkInterfaces:
         - DeviceIndex: 0
           AssociatePublicIpAddress: false
+          SubnetId: !Ref Subnet1
       Tags:
         - Key: Name
           Value: !Sub '${TeamName}-ec2-1'

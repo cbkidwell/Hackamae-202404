@@ -334,7 +334,6 @@ Resources:
           INSTANCE_ID=$(ec2-metadata -i | awk '{print $2}')
           AMI_ID=$(ec2-metadata -a | awk '{print $2}')
           REGION=$(aws ec2 describe-availability-zones --output text --query 'AvailabilityZones[0].[RegionName]')
-          AMI_DESCRIPTION=$(aws ec2 describe-images --image-id ${AMI_ID} | jq -r '.Images[0].Description')
           INSTANCE_DETAIL=$(aws ec2 describe-instances --instance-id $INSTANCE_ID | jq '.Reservations[0].Instances[0]')
           INSTANCE_TYPE=$(ec2-metadata -t | awk '{print $2}')
           VPC_ID=$(echo $INSTANCE_DETAIL | jq -r '.VpcId')
@@ -365,7 +364,7 @@ Resources:
           
           echo "<p><table border='1'><tr><th>Parameter</th><th>Value</th></tr>" >> $OUT
           echo "<tr><td>Instance Id</td><td>$INSTANCE_ID</td></tr>" >> $OUT
-          echo "<tr><td>AMI Id</td><td>$AMI_ID</td></tr>" >> $OUT
+          #echo "<tr><td>AMI Id</td><td>$AMI_ID</td></tr>" >> $OUT
           echo "<tr><td>AMI Description</td><td>$AMI_DESCRIPTION</td></tr>" >> $OUT
           echo "<tr><td>Instance Type</td><td>$INSTANCE_TYPE</td></tr>" >> $OUT
           echo "<tr><td>VPC Id</td><td>$VPC_ID</td></tr>" >> $OUT

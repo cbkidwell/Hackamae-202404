@@ -128,7 +128,7 @@ Resources:
             #!/bin/sh
             yum update -y
             amazon-linux-extras install epel -y
-            yum install httpd php stress -y
+            yum install httpd jq php stress -y
             
             mkdir -p /export/appl/data
             mkfs -t xfs /dev/xvdb
@@ -324,7 +324,7 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/sh
           yum update -y
-          yum install amazon-efs-utils httpd php -y
+          yum install amazon-efs-utils jq httpd php -y
           
           mkdir -p /export/appl/data
           mkfs -t xfs /dev/xvdb
@@ -349,6 +349,21 @@ Resources:
 
           systemctl start httpd
           systemctl enable httpd
+
+  NetworkInterface1:
+    Type: AWS::EC2::NetworkInterface
+    Properties:
+      SubnetId: !Ref Subnet1
+      Tags:
+        - Key: Name
+          Value: !Sub '${TeamName}-eni-1'
+
+  NetworkInterfaceAttachment1:
+    Type: AWS::EC2::NetworkInterfaceAttachment
+    Properties:
+      InstanceId: !Ref EC2Instance1
+      NetworkInterfaceId: !Ref NetworkInterface1
+      DeviceIndex: 1
 
   EC2Instance2:
     Type: AWS::EC2::Instance
@@ -381,7 +396,7 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/sh
           yum update -y
-          yum install amazon-efs-utils httpd php -y
+          yum install amazon-efs-utils jq httpd php -y
           
           mkdir -p /export/appl/data
           mkfs -t xfs /dev/xvdb
@@ -405,3 +420,18 @@ Resources:
 
           systemctl start httpd
           systemctl enable httpd
+
+  NetworkInterface2:
+    Type: AWS::EC2::NetworkInterface
+    Properties:
+      SubnetId: !Ref Subnet2
+      Tags:
+        - Key: Name
+          Value: !Sub '${TeamName}-eni-2'
+
+  NetworkInterfaceAttachment2:
+    Type: AWS::EC2::NetworkInterfaceAttachment
+    Properties:
+      InstanceId: !Ref EC2Instance2
+      NetworkInterfaceId: !Ref NetworkInterface2
+      DeviceIndex: 1

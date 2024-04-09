@@ -147,7 +147,7 @@ Resources:
             
             echo "test data file for EBS root volume created at $(date)" > /readme.txt
             echo "test data file for EBS data volume created at $(date)" > /export/appl/data/readme.txt
-  
+
             echo "<html><h1>Hello World</h1></html>" > /var/www/html/index.html
   
             OUT=/var/www/html/index.php
@@ -374,7 +374,7 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/sh
           yum update -y
-          yum install amazon-efs-utils jq httpd php -y
+          yum install amazon-efs-utils jq httpd php java-17-amazon-corretto -y
 
           INSTANCE_ID=$(ec2-metadata -i | awk '{print $2}')
           AMI_ID=$(ec2-metadata -a | awk '{print $2}')
@@ -398,6 +398,23 @@ Resources:
           echo "test data file for EBS root volume created at $(date)" > /readme.txt
           echo "test data file for EBS data volume created at $(date)" > /export/appl/data/readme.txt
           echo "test data file for EFS data2 volume created at $(date)" > /export/appl/data2/readme.txt
+
+          cd /export/appl/data
+          wget https://github.com/cbkidwell/Hackamae-202404/raw/main/hello.jar
+
+          SERVICE=/etc/systemd/system/spring-boot-hello.service
+          echo "[Unit]" >> $SERVICE
+          echo "Description=SpringBoot Hello" >> $SERVICE
+          echo "After=syslog.target" >> $SERVICE
+          echo "[Service]" >> $SERVICE
+          echo "User=ec2-user" >> $SERVICE
+          echo "ExecStart=/bin/java -jar /export/appl/data/hello.jar" >> $SERVICE
+          echo "Restart=always" >> $SERVICE
+          echo "RestartSec=5" >> $SERVICE
+          echo "[Install]" >> $SERVICE
+          echo "WantedBy=multi-user.target" >> $SERVICE
+          systemctl enable spring-boot-hello.service
+          systemctl start spring-boot-hello.service
 
           echo "<html><h1>Hello World</h1></html>" > /var/www/html/index.html
 

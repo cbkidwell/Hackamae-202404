@@ -335,6 +335,7 @@ Resources:
           AMI_ID=$(ec2-metadata -a | awk '{print $2}')
           REGION=$(ec2-metadata -z | awk '{print $2}' | rev | cut -c2- | rev)
           aws configure set region $REGION
+          AMI_DESCRIPTION=$(aws ec2 describe-images --image-id $AMI_ID | jq -r '.Images[0].Description')
           INSTANCE_DETAIL=$(aws ec2 describe-instances --instance-id $INSTANCE_ID | jq '.Reservations[0].Instances[0]')
           INSTANCE_TYPE=$(ec2-metadata -t | awk '{print $2}')
           VPC_ID=$(echo $INSTANCE_DETAIL | jq -r '.VpcId')
@@ -372,7 +373,7 @@ Resources:
           echo "<tr><td>Availability Zone</td><td>$AVAILABILITY_ZONE</td></tr>" >> $OUT
           echo "<tr><td>Hostname</td><td>$(hostname)</td><tr>" >> $OUT
           
-          echo "<tr><td>Security Groups</td><td><table border='1'><tr><th>Name</th><td>Id</td></tr>" >> $OUT
+          echo "<tr><td>Security Groups</td><td><table border='1'><tr><th>Name</th><th>Id</th></tr>" >> $OUT
           aws ec2 describe-instances --instance-id $INSTANCE_ID --query 'Reservations[].Instances[].SecurityGroups[]' --output text |
           while read LINE
           do
@@ -390,6 +391,8 @@ Resources:
             VALUE=$(echo $LINE | cut -d ' ' -f 2)
             echo "<tr><td>$NAME</td><td>$VALUE</td></tr>" >> $OUT
           done
+          echo "</table></td></tr>" >> $OUT
+
           echo "<tr><td>EBS Root volume</td><td><?php include '/readme.txt'; ?></td></tr>" >> $OUT
           echo "<tr><td>EBS Data volume</td><td><?php include '/export/appl/data/readme.txt'; ?></td></tr>" >> $OUT
           echo "<tr><td>EFS Data2 volume</td><td><?php include '/export/appl/data2/readme.txt'; ?></td></tr>" >> $OUT

@@ -129,6 +129,11 @@ Resources:
             yum update -y
             amazon-linux-extras install epel -y
             yum install httpd jq php stress -y
+
+            INSTANCE_ID=$(ec2-metadata -i | awk '{print $2}')
+            AMI_ID=$(ec2-metadata -a | awk '{print $2}')
+            REGION=$(aws ec2 describe-availability-zones --output text --query 'AvailabilityZones[0].[RegionName]')
+            aws configure set region $REGION
             
             mkdir -p /export/appl/data
             mkfs -t xfs /dev/xvdb
@@ -314,6 +319,8 @@ Resources:
             VolumeSize: 1
             Encrypted: true
             KmsKeyId: !Ref KmsKey
+      NetworkInterfaces:
+        AssociatePublicIpAddress: false
       Tags:
         - Key: Name
           Value: !Sub '${TeamName}-ec2-1'
@@ -325,7 +332,12 @@ Resources:
           #!/bin/sh
           yum update -y
           yum install amazon-efs-utils jq httpd php -y
-          
+
+          INSTANCE_ID=$(ec2-metadata -i | awk '{print $2}')
+          AMI_ID=$(ec2-metadata -a | awk '{print $2}')
+          REGION=$(aws ec2 describe-availability-zones --output text --query 'AvailabilityZones[0].[RegionName]')
+          aws configure set region $REGION
+
           mkdir -p /export/appl/data
           mkfs -t xfs /dev/xvdb
           echo "/dev/xvdb /export/appl/data xfs defaults,nofail 0 2" >> /etc/fstab
@@ -397,7 +409,12 @@ Resources:
           #!/bin/sh
           yum update -y
           yum install amazon-efs-utils jq httpd php -y
-          
+
+          INSTANCE_ID=$(ec2-metadata -i | awk '{print $2}')
+          AMI_ID=$(ec2-metadata -a | awk '{print $2}')
+          REGION=$(aws ec2 describe-availability-zones --output text --query 'AvailabilityZones[0].[RegionName]')
+          aws configure set region $REGION
+
           mkdir -p /export/appl/data
           mkfs -t xfs /dev/xvdb
           echo "/dev/xvdb /export/appl/data xfs defaults,nofail 0 2" >> /etc/fstab

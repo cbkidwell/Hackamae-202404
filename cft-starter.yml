@@ -304,8 +304,6 @@ Resources:
       KeyName: !Ref KeyPair
       ImageId: !Ref AMI
       InstanceType: t2.micro
-      SecurityGroupIds:
-        - !Ref EC2SecurityGroup
       IamInstanceProfile: EC2FullAccessRole
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
@@ -322,6 +320,8 @@ Resources:
         - DeviceIndex: 0
           AssociatePublicIpAddress: false
           SubnetId: !Ref Subnet1
+          GroupSet:
+            - !Ref EC2SecurityGroup
       Tags:
         - Key: Name
           Value: !Sub '${TeamName}-ec2-1'

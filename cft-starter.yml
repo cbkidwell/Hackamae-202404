@@ -419,6 +419,14 @@ Resources:
           echo "<html><h1>Hello World</h1></html>" > /var/www/html/index.html
 
           OUT=/var/www/html/index.php
+          echo "<?php" >> $OUT
+          echo "$curl = curl_init();" >> $OUT
+          echo "curl_setopt($curl, CURLOPT_URL, 'http://localhost:8090/hello');" >> $OUT
+          echo "curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);" >> $OUT
+          echo "$hello = curl_exec($curl);" >> $OUT
+          echo "curl_close($curl);" >> $OUT
+          echo "?>" >> $OUT
+          
           echo "<html><head><title>Hack-a-Mae Status</title></head><body>" >> $OUT
           echo "<h2>Hack-a-Mae Status</h2>" >> $OUT
           echo "<h3>Standalone EC2</h3>" >> $OUT
@@ -458,7 +466,7 @@ Resources:
           echo "<tr><td>EBS Root volume</td><td><?php include '/readme.txt'; ?></td></tr>" >> $OUT
           echo "<tr><td>EBS Data volume</td><td><?php include '/export/appl/data/readme.txt'; ?></td></tr>" >> $OUT
           echo "<tr><td>EFS Data2 volume</td><td><?php include '/export/appl/data2/readme.txt'; ?></td></tr>" >> $OUT
-
+          echo "<tr><td>Spring Boot</td><td><?php echo $hello; ?></td></tr>" >> $OUT
           echo "</table></td></tr>" >> $OUT
           
           echo "</table></body></html>" >> $OUT

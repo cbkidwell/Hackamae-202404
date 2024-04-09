@@ -304,7 +304,7 @@ Resources:
       KeyName: !Ref KeyPair
       ImageId: !Ref AMI
       InstanceType: t2.micro
-      SubnetId: !Ref Subnet2
+      SubnetId: !Ref Subnet1
       SecurityGroupIds:
         - !Ref EC2SecurityGroup
       IamInstanceProfile: EC2FullAccessRole

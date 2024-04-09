@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Hackathon Starter Stack
+Description: Hackamae Starter Stack
 
 Parameters:
   VPC:
@@ -576,6 +576,8 @@ Resources:
     Type: AWS::EC2::NetworkInterface
     Properties:
       SubnetId: !Ref Subnet2
+      GroupSet:
+        - !Ref EC2SecurityGroup
       Tags:
         - Key: Name
           Value: !Sub '${TeamName}-eni-2'

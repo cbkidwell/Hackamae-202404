@@ -75,6 +75,8 @@ Each EC2 instance is setup with the following items:
     - jq
     - SpringBoot demo application deployed to /export/appl/data and run as a service on startup
 
+There is also a web page created to summarize the configuration, read data from several text files, and report the status of the SpringBoot application. To access that page, go to http://`DNS name from your ALB`/index.php
+
 
 ## Challenge Details
 
@@ -88,4 +90,4 @@ The challenge for Hack-a-Mae 3.0 is to:
     - Security group(s)
     - Private IP address(es)
     - Tag(s)
-  - 
+  - Validate the status page for each ALB to confirm the environment is working properly. The only values that should change are Instance Id and AMI id/description.

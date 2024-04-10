@@ -55,7 +55,8 @@ Note that AWS burner accounts are only available for 3 days, so each team will r
     - Select the MyCloudFormationServiceRole created in step 3
     - Click Next ![Screenshot of CodePipeline deploy stage](/resources/codepipeline-3.png)
   - Review the settings and click Create Pipeline
-  - Pipeline should trigger automatically. Monitor the status in CodePipeline and CloudFormation until stack is created successfully. ![Screenshot of CodePipeline success](/resources/codepipeline-success.png) ![Screenshot of CloudFormation success](/resources/cloudformation-success.png)
+  - Pipeline should trigger automatically. Monitor the status in CodePipeline and CloudFormation until stack is created successfully.
+  ![Screenshot of CodePipeline success](/resources/codepipeline-success.png) ![Screenshot of CloudFormation success](/resources/cloudformation-success.png)
 
 
 ## Environment Details

@@ -12,6 +12,7 @@ Parameters:
     Type: String
   AMI:
     Type: String
+    Default: ami-07761f3ae34c4478d
   TeamNumber:
     Type: String
 
